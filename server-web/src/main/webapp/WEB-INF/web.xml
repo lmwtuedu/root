@@ -70,6 +70,7 @@
 	    <url-pattern>/*</url-pattern>
 	</filter-mapping>
 
+	<!--XXS 过滤-->
 	<filter>
 		<filter-name>xssFilter</filter-name>
 		<filter-class>io.renren.xss.XssFilter</filter-class>
@@ -79,7 +80,8 @@
 		<filter-name>xssFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
-	
+
+	<!--在向servlet 或JSP页面制定初始化参数或定制URL时，必须首先命名 servlet或JSP页面.DS_Store-->
 	<servlet>
         <servlet-name>dispatcher</servlet-name>
         <servlet-class>
@@ -87,7 +89,13 @@
         </servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-    
+
+	<!--
+		主要是截获请求给servlet-name定义的servlet处理
+		/ 和 /* 区别
+		<url-pattern>/</url-pattern> 会匹配到/login这样的路径型url，不会匹配到模式为*.jsp这样的后缀型url；
+		<url-pattern>/*</url-pattern> 会匹配所有url：路径型的和后缀型的url(包括/login,*.jsp,*.js和*.html等)
+	-->
 	<servlet-mapping>
 		<servlet-name>dispatcher</servlet-name>
 		<url-pattern>/</url-pattern>
