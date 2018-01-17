@@ -1,0 +1,43 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+		<groupId>io.server</groupId>
+		<artifactId>server-security</artifactId>
+		<version>2.0.0</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>server-web</artifactId>
+	<packaging>war</packaging>
+    <description>管理后台</description>
+	
+	<dependencies>
+        <dependency>
+            <groupId>io.server</groupId>
+            <artifactId>server-common</artifactId>
+            <version>${server-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.server</groupId>
+            <artifactId>server-shiro</artifactId>
+            <version>${server-version}</version>
+        </dependency>
+		<dependency>
+            <groupId>io.server</groupId>
+            <artifactId>server-gen</artifactId>
+            <version>${server-version}</version>
+        </dependency>
+		<dependency>
+            <groupId>io.server</groupId>
+            <artifactId>server-schedule</artifactId>
+            <version>${server-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.server</groupId>
+            <artifactId>server-api</artifactId>
+            <version>${server-version}</version>
+        </dependency>
+    </dependencies>
+	<build>
+		<finalName>server-security</finalName>
+	</build>
+	
+</project>
