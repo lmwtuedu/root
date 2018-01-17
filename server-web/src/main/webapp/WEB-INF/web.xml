@@ -73,7 +73,7 @@
 	<!--XXS 过滤-->
 	<filter>
 		<filter-name>xssFilter</filter-name>
-		<filter-class>io.renren.xss.XssFilter</filter-class>
+		<filter-class>com.darker.xss.XssFilter</filter-class>
 	</filter>
 
 	<filter-mapping>

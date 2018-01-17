@@ -7,9 +7,10 @@
 		http://www.springframework.org/schema/mvc
      	http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd">
 
+	<bean id="userService" class="com.darker.service.impl.UserServiceImpl"></bean>
 	<mvc:annotation-driven>
 		<mvc:argument-resolvers>
-			<bean class="io.renren.resolver.LoginUserHandlerMethodArgumentResolver">
+			<bean class="com.darker.resolver.LoginUserHandlerMethodArgumentResolver">
 				<property name="userService" ref="userService"></property>
 			</bean>
 		</mvc:argument-resolvers>
@@ -34,6 +35,7 @@
 		</mvc:message-converters>
 	</mvc:annotation-driven>
 
+	<bean id="authorizationInterceptor" class="com.darker.interceptor.AuthorizationInterceptor"></bean>
 	<mvc:interceptors>
 		<mvc:interceptor>
 			<mvc:mapping path="/api/**" />

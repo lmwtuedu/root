@@ -59,8 +59,8 @@
 	<bean id="druid-stat-pointcut" class="org.springframework.aop.support.JdkRegexpMethodPointcut" scope="prototype">
 		<property name="patterns">
 			<list>
-				<value>io.renren.controller.*</value>
-				<value>io.renren.service.*</value>
+				<value>com.darker.controller.*</value>
+				<value>com.darker.service.*</value>
 			</list>
 		</property>
 	</bean>
@@ -81,6 +81,6 @@
 	</bean>
 
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="io.renren.dao" />
+		<property name="basePackage" value="com.darker.dao" />
 	</bean>
 </beans>
