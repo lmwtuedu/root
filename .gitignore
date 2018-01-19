@@ -9,3 +9,5 @@ target
 .DS_Store
 /build/
 *.settings
+server-shiro/private.key
+server-shiro/public.key

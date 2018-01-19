@@ -64,7 +64,6 @@ var vm = new Vue({
 			vm.title = "新增";
 			vm.roleList = {};
 			vm.user = {status:1,roleIdList:[]};
-			
 			//获取角色信息
 			this.getRoleList();
 		},
@@ -106,20 +105,41 @@ var vm = new Vue({
 		},
 		saveOrUpdate: function (event) {
 			var url = vm.user.userId == null ? "../sys/user/save" : "../sys/user/update";
-			$.ajax({
-				type: "POST",
-			    url: url,
-			    data: JSON.stringify(vm.user),
-			    success: function(r){
-			    	if(r.code === 0){
-						alert('操作成功', function(index){
-							vm.reload();
-						});
-					}else{
-						alert(r.msg);
-					}
-				}
-			});
+			if (vm.user.password != vm.user.confirm_password){
+			    alert("密码两次输入不一样");
+            }else{
+			    // 将密码进行加密传输
+                // 获取加密的密钥
+                $.get("../sys/user/rsa/public", function (r) {
+                    if (0 != r.code){
+                        alert(r.msg);
+                    }else{
+                        var publicKeyBase64=r.rsa1024PublicKeyBase64;
+                        // 加密
+                        var encPwdBase64 = encRsa1024(vm.user.password,publicKeyBase64);
+                        vm.user.password = encPwdBase64;
+                        // bug： 密码不能加密后再重新赋值
+
+                        $.ajax({
+                            type: "POST",
+                            url: url,
+                            data: JSON.stringify(vm.user),
+                            success: function(r){
+                                if(r.code === 0){
+                                    alert('操作成功', function(index){
+                                        vm.reload();
+                                    });
+                                }else{
+                                    alert(r.msg);
+                                    vm.user.password="";
+                                    vm.user.confirm_password="";
+                                }
+                            }
+                        });
+
+                    }
+                });
+            }
 		},
 		getUser: function(userId){
 			$.get("../sys/user/info/"+userId, function(r){

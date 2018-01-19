@@ -22,8 +22,11 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.crypto.hash.Sha256Hash;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
+import org.apache.shiro.util.SimpleByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -82,7 +85,8 @@ public class UserRealm extends AuthorizingRealm {
 			AuthenticationToken token) throws AuthenticationException {
 		String username = (String) token.getPrincipal();
         String password = new String((char[]) token.getCredentials());
-        
+        String salt = ((UsernameSaltPasswordToken)token).getSalt();
+        ByteSource credentialsSalt = new SimpleByteSource(salt);
         //查询用户信息
         SysUserEntity user = sysUserService.queryByUserName(username);
         
@@ -92,7 +96,9 @@ public class UserRealm extends AuthorizingRealm {
         }
         
         //密码错误
-        if(!password.equals(user.getPassword())) {
+        String psd = user.getPassword();
+        String hashPsd = new Sha256Hash(salt + psd).toHex();
+        if(!password.equals(hashPsd)) {
             throw new IncorrectCredentialsException("账号或密码不正确");
         }
         
@@ -101,7 +107,7 @@ public class UserRealm extends AuthorizingRealm {
         	throw new LockedAccountException("账号已被锁定,请联系管理员");
         }
         
-        SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user, password, getName());
+        SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user, password, credentialsSalt, getName());
         return info;
 	}
 

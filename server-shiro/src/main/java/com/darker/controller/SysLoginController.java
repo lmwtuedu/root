@@ -1,5 +1,6 @@
 package com.darker.controller;
 
+import com.darker.shiro.UsernameSaltPasswordToken;
 import com.darker.utils.ShiroUtils;
 import com.darker.utils.R;
 
@@ -69,8 +70,10 @@ public class SysLoginController {
 		try{
 			Subject subject = ShiroUtils.getSubject();
 			//sha256加密
-			password = new Sha256Hash(password).toHex();
-			UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+//			password = new Sha256Hash(password).toHex();
+//			UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+			UsernameSaltPasswordToken token = new UsernameSaltPasswordToken(username,password, captcha);
+
 			subject.login(token);
 		}catch (UnknownAccountException e) {
 			return R.error(e.getMessage());

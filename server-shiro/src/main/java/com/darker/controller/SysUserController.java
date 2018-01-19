@@ -16,10 +16,15 @@ import com.darker.validator.ValidatorUtils;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.codec.Base64;
 import org.apache.shiro.crypto.hash.Sha256Hash;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +38,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/sys/user")
 public class SysUserController extends AbstractController {
+
+    private static final Logger log = LoggerFactory.getLogger(SysUserController.class);
+
 	@Autowired
 	private SysUserService sysUserService;
 	@Autowired
@@ -66,6 +74,43 @@ public class SysUserController extends AbstractController {
 	public R info(){
 		return R.ok().put("user", getUser());
 	}
+
+	/**
+	 * 获取RSA的公钥
+	 * @return
+	 */
+	@RequestMapping("/rsa/public")
+	public R rsa1024PublicKey(){
+		try {
+			byte[] publicKey = RSA1024Utils.readFileKey("./public.key");
+            String publicKeyBase64 = Base64.encodeToString(publicKey);
+            return R.ok().put("rsa1024PublicKeyBase64", publicKeyBase64);
+		} catch (Exception e) {
+			return R.error(ErrorCode.INVALID_RSA_READ_PUBLIC_KEY);
+		}
+	}
+
+    /**
+     * 生成RSA1024公私密钥对
+     * @return
+     */
+	@RequestMapping("/rsa/genPairkey")
+	public R genRsa1024PairKey(){
+        try {
+            KeyPair keyPair = RSA1024Utils.genKeyPair();
+            byte[] publicKey = RSA1024Utils.getPublicKey(keyPair);
+            byte[] privateKey = RSA1024Utils.getPrivateKey(keyPair);
+            log.debug("public : {}" , Base64.encodeToString(publicKey));
+            log.debug("private : {}", Base64.encodeToString(privateKey));
+            RSA1024Utils.saveFileKey("./public.key", publicKey);
+            RSA1024Utils.saveFileKey("./private.key", privateKey);
+
+            return R.ok();
+        } catch (Exception e) {
+            return R.error(ErrorCode.INVALID_RSA_GEN_PAIRKEY);
+        }
+
+    }
 	
 	/**
 	 * 修改登录用户密码
@@ -115,7 +160,18 @@ public class SysUserController extends AbstractController {
 	@RequiresPermissions("sys:user:save")
 	public R save(@RequestBody SysUserEntity user){
 		ValidatorUtils.validateEntity(user, AddGroup.class);
-		
+		// 进行解密之后，存储
+        try {
+            // 私钥获取,解密
+            byte[] privateKey = RSA1024Utils.readFileKey("./private.key");
+            PrivateKey rsaPrivateKey = RSA1024Utils.byteToPrivateKey(privateKey);
+            String encPwdBase64 = user.getPassword();
+            byte[] encPwd = Base64.decode(encPwdBase64);
+            String pwd = new String(RSA1024Utils.decrypt(encPwd, rsaPrivateKey));
+            user.setPassword(pwd);
+        } catch (Exception e) {
+            return R.error(ErrorCode.INVALID_RSA_READ_PUBLIC_KEY);
+        }
 		user.setCreateUserId(getUserId());
 		sysUserService.save(user);
 		

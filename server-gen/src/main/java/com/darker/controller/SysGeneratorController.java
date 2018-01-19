@@ -1,9 +1,9 @@
 package com.darker.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.darker.service.SysGeneratorService;
 import com.darker.annotation.SysLog;
 import com.darker.service.SysGeneratorService;
+
 import com.darker.utils.PageUtils;
 import com.darker.utils.Query;
 import com.darker.utils.R;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class SysGeneratorController {
 		byte[] data = sysGeneratorService.generatorCode(tableNames);
 		
 		response.reset();  
-        response.setHeader("Content-Disposition", "attachment; filename=\"renren.zip\"");  
+        response.setHeader("Content-Disposition", "attachment; filename=\"darker.zip\"");
         response.addHeader("Content-Length", "" + data.length);  
         response.setContentType("application/octet-stream; charset=UTF-8");  
   
