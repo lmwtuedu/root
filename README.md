@@ -91,3 +91,9 @@ server-security
 - 项目访问路径：http://localhost
 - 非Maven方式启动，则默认访问路径为：http://localhost:8080/server-security
 - 账号密码：admin/admin
+
+
+**安全防御**
+- 敏感数据加密传输（RSA1024）
+- CSRF攻击防御
+- 证书（待定https）
