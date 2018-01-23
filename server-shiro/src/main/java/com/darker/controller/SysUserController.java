@@ -14,7 +14,9 @@ import com.darker.validator.group.UpdateGroup;
 import com.darker.validator.Assert;
 import com.darker.validator.ValidatorUtils;
 
+import com.google.code.kaptcha.Constants;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.ibatis.annotations.Param;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.crypto.hash.Sha256Hash;
@@ -117,15 +119,34 @@ public class SysUserController extends AbstractController {
 	 */
 	@SysLog("修改密码")
 	@RequestMapping("/password")
-	public R password(String password, String newPassword){
-		Assert.isBlank(newPassword, "新密码不为能空");
-		
-		//sha256加密
-		password = new Sha256Hash(password).toHex();
-		//sha256加密
-		newPassword = new Sha256Hash(newPassword).toHex();
-				
-		//更新密码
+	public R password(@RequestParam(required = true, value = "password") String passwordBase64,
+                      @RequestParam(required = true, value = "newPassword") String newPasswordBase64,
+                      @RequestParam(required = true, value = "captcha") String captcha){
+
+		Assert.isBlank(newPasswordBase64, "新密码不为能空");
+
+		// 校验验证码
+		String kaptcha = ShiroUtils.getKaptcha(Constants.KAPTCHA_SESSION_KEY);
+		if(!captcha.equalsIgnoreCase(kaptcha)){
+			return R.error("验证码不正确");
+		}
+        String password = null;
+		String newPassword = null;
+        try {
+            // 解密密码
+            password = new String(decRSA1024Data(passwordBase64));
+            newPassword = new String(decRSA1024Data(newPasswordBase64));
+
+            String username = ShiroUtils.getUserEntity().getUsername();
+            //sha256加密
+            password = new Sha256Hash(username + password).toHex();
+            //sha256加密
+            newPassword = new Sha256Hash(username + newPassword).toHex();
+        } catch (Exception e) {
+            return R.error(ErrorCode.INVALID_RSA_READ_PRIVATE_KEY);
+        }
+
+        //更新密码
 		int count = sysUserService.updatePassword(getUserId(), password, newPassword);
 		if(count == 0){
 			return R.error("原密码不正确");
@@ -134,7 +155,7 @@ public class SysUserController extends AbstractController {
 		//退出
 		ShiroUtils.logout();
 		
-		return R.ok();
+		return R.ok("修改密码成功");
 	}
 	
 	/**
@@ -163,12 +184,10 @@ public class SysUserController extends AbstractController {
 		// 进行解密之后，存储
         try {
             // 私钥获取,解密
-            byte[] privateKey = RSA1024Utils.readFileKey("./private.key");
-            PrivateKey rsaPrivateKey = RSA1024Utils.byteToPrivateKey(privateKey);
             String encPwdBase64 = user.getPassword();
-            byte[] encPwd = Base64.decode(encPwdBase64);
-            String pwd = new String(RSA1024Utils.decrypt(encPwd, rsaPrivateKey));
-            user.setPassword(pwd);
+            byte[] pwd = decRSA1024Data(encPwdBase64);
+            String pwdStr = new String(pwd);
+            user.setPassword(pwdStr);
         } catch (Exception e) {
             return R.error(ErrorCode.INVALID_RSA_READ_PUBLIC_KEY);
         }
@@ -212,4 +231,14 @@ public class SysUserController extends AbstractController {
 		
 		return R.ok();
 	}
+
+	private byte[] decRSA1024Data(String strBase64) throws Exception{
+        // 私钥获取,解密
+        byte[] privateKey = RSA1024Utils.readFileKey("./private.key");
+        PrivateKey rsaPrivateKey = RSA1024Utils.byteToPrivateKey(privateKey);
+        byte[] encStr = Base64.decode(strBase64);
+        byte[] data = RSA1024Utils.decrypt(encStr, rsaPrivateKey);
+
+        return data;
+    }
 }

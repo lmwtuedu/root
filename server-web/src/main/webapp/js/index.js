@@ -37,9 +37,14 @@ var vm = new Vue({
 		main:"sys/main.html",
 		password:'',
 		newPassword:'',
+        captcha:'',
+        src: 'captcha.jpg',
         navTitle:"控制台"
 	},
 	methods: {
+        refreshCode: function(){
+            this.src = "captcha.jpg?t=" + $.now();
+        },
 		getMenuList: function (event) {
 			$.getJSON("sys/menu/user?_"+$.now(), function(r){
 				vm.menuList = r.menuList;
@@ -55,28 +60,49 @@ var vm = new Vue({
 				type: 1,
 				skin: 'layui-layer-molv',
 				title: "修改密码",
-				area: ['550px', '270px'],
+				area: ['550px', '400px'],
 				shadeClose: false,
 				content: jQuery("#passwordLayer"),
 				btn: ['修改','取消'],
 				btn1: function (index) {
-					var data = "password="+vm.password+"&newPassword="+vm.newPassword;
-					$.ajax({
-						type: "POST",
-					    url: "sys/user/password",
-					    data: data,
-					    dataType: "json",
-					    success: function(result){
-							if(result.code == 0){
-								layer.close(index);
-								layer.alert('修改成功', function(index){
-									location.reload();
-								});
-							}else{
-								layer.alert(result.msg);
-							}
-						}
-					});
+                    // 获取加密的密钥
+                    $.get("sys/user/rsa/public", function (r) {
+                        if (0 != r.code) {
+                            layer.alert(r.msg);
+                        } else {
+                            var publicKeyBase64 = r.rsa1024PublicKeyBase64;
+                            // 加密
+                            var encPwdBase64 = encRsa1024(vm.password, publicKeyBase64);
+                            var encNewPwdBase64 = encRsa1024(vm.newPassword, publicKeyBase64);
+
+                            // var data = "password="+encPwdBase64+"&newPassword="+encNewPwdBase64+"&captcha="+vm.captcha;
+							// bug: base64编码不能这么传递
+							var data ={
+								password:encPwdBase64,
+								newPassword:encNewPwdBase64,
+								captcha:vm.captcha
+							};
+                            $.ajax({
+                                type: "POST",
+                                url: "sys/user/password",
+                                data: data,
+                                contentType:"application/x-www-form-urlencoded",
+                                dataType:"json",
+                                success: function(result){
+                                    if(result.code == 0){
+                                        layer.close(index);
+                                        layer.alert('修改成功', function(index){
+                                            location.reload();
+                                        });
+                                    }else{
+                                    	vm.refreshCode();
+                                        layer.alert(result.msg);
+                                    }
+                                }
+                            });
+
+                        }
+                    }, "json");
 	            }
 			});
 		}
